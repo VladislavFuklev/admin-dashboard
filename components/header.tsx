@@ -25,7 +25,7 @@ export default function Header() {
 				>
 					VF
 				</Link>
-				<div className='flex items-center gap-2'>
+				<div className='flex items-center gap-3'>
 					<ModeToggle />
 					{status === 'authenticated' ? (
 						<UserMenu />

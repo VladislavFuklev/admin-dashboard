@@ -1,6 +1,6 @@
 'use client'
 import { useSettings } from '@/components/settings-provider'
-import { formatTemp } from '@/lib/settings'
+import { City, formatTemp } from '@/lib/settings'
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
 import {
@@ -18,9 +18,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '../../components/ui/card'
-import { getWeather } from '../../lib/client/weather'
-
-type City = { name: string; lat: number; lon: number; tz: string }
+import { getWeather, WeatherPoint } from '../../lib/client/weather'
 
 const CITIES: City[] = [
 	{ name: 'Warsaw', lat: 52.2297, lon: 21.0122, tz: 'Europe/Warsaw' },
@@ -33,16 +31,14 @@ const CITIES: City[] = [
 export default function DashboardClient() {
 	const { settings } = useSettings()
 
-	const [city, setCity] = React.useState<City>(
-		CITIES.find(c => c.name === 'Kyiv') || CITIES[0]
-	)
+	const [city, setCity] = React.useState<City>(CITIES[3])
 
-	// Apply default city from settings on mount
 	React.useEffect(() => {
-		if (!settings.defaultCity) return
-		const next = CITIES.find(c => c.name === settings.defaultCity)
+		const all: City[] = [...CITIES, ...(settings.favorites ?? [])]
+		const target = settings.currentCity || settings.defaultCity
+		const next = all.find(c => c.name === target)
 		if (next) setCity(next)
-	}, [settings.defaultCity])
+	}, [settings.currentCity, settings.defaultCity, settings.favorites])
 
 	const weatherQuery = useQuery({
 		queryKey: [
@@ -60,7 +56,6 @@ export default function DashboardClient() {
 		staleTime: 60_000,
 	})
 
-	// Compute KPI metrics from temperature series
 	const series = weatherQuery.data?.data ?? []
 	const last = series.at(-1)?.temperature
 	const last24 = series.slice(-24).map(p => p.temperature ?? 0)
@@ -76,13 +71,11 @@ export default function DashboardClient() {
 			? last - (series.at(-25)!.temperature as number)
 			: undefined
 
-	// Metric tabs
 	type Metric = 'temperature' | 'wind' | 'humidity' | 'precipitation'
 	const [metric, setMetric] = React.useState<Metric>('temperature')
 
 	return (
 		<div className='space-y-8'>
-			{/* KPI Cards (static) */}
 			<div className='grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'>
 				<Card>
 					<CardHeader>
@@ -175,7 +168,7 @@ export default function DashboardClient() {
 												: m === 'wind'
 												? 'Ветер'
 												: m === 'humidity'
-												? 'Влажн'
+												? 'Влажность'
 												: 'Осадки'}
 										</button>
 									))}
@@ -195,6 +188,11 @@ export default function DashboardClient() {
 										{c.name}
 									</option>
 								))}
+								{(settings.favorites ?? []).map(c => (
+									<option key={`fav-${c.name}`} value={c.name}>
+										{c.name}
+									</option>
+								))}
 							</select>
 						</div>
 					</CardHeader>
@@ -208,7 +206,7 @@ export default function DashboardClient() {
 						) : (
 							<ResponsiveContainer width='100%' height='100%'>
 								<AreaChart
-									data={weatherQuery.data?.data ?? []}
+									data={(weatherQuery.data?.data as WeatherPoint[]) ?? []}
 									margin={{ left: 8, right: 8, top: 8, bottom: 0 }}
 								>
 									<defs>

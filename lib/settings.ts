@@ -1,21 +1,45 @@
 export type Units = 'C' | 'F'
 
+export type City = { name: string; lat: number; lon: number; tz?: string }
+
 export type Settings = {
 	units: Units
 	defaultCity?: string
+	currentCity?: string
+	favorites?: City[]
 }
 
-const KEY = 'app-settings-v1'
+const KEY = 'app-settings-v2'
 
 export function loadSettings(): Settings {
 	if (typeof window === 'undefined') return { units: 'C' }
 	try {
-		const raw = localStorage.getItem(KEY)
-		if (!raw) return { units: 'C' }
-		const parsed = JSON.parse(raw) as Partial<Settings>
-		return { units: parsed.units ?? 'C', defaultCity: parsed.defaultCity }
+		const rawV2 = localStorage.getItem(KEY)
+		if (rawV2) {
+			const parsed = JSON.parse(rawV2) as Partial<Settings>
+			return {
+				units: parsed.units ?? 'C',
+				defaultCity: parsed.defaultCity,
+				currentCity: parsed.currentCity ?? parsed.defaultCity,
+				favorites: parsed.favorites ?? [],
+			}
+		}
+		// migrate from v1
+		const rawV1 = localStorage.getItem('app-settings-v1')
+		if (rawV1) {
+			const prev = JSON.parse(rawV1) as { units?: Units; defaultCity?: string }
+			const migrated: Settings = {
+				units: prev.units ?? 'C',
+				defaultCity: prev.defaultCity,
+				currentCity: prev.defaultCity,
+				favorites: [],
+			}
+			saveSettings(migrated)
+			return migrated
+		}
+		return { units: 'C', favorites: [] }
 	} catch {
-		return { units: 'C' }
+		return { units: 'C', favorites: [] }
 	}
 }
 
