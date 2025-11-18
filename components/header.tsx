@@ -27,13 +27,7 @@ export default function Header() {
 				</Link>
 				<div className='flex items-center gap-3'>
 					<ModeToggle />
-					{status === 'authenticated' ? (
-						<UserMenu />
-					) : (
-						<Link href='/signin'>
-							<Button variant='outline'>Войти</Button>
-						</Link>
-					)}
+					{status === 'authenticated' ? <UserMenu /> : null}
 				</div>
 			</div>
 		</header>
