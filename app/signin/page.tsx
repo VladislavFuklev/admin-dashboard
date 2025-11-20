@@ -87,8 +87,9 @@ export default function SignInPage() {
 				</form>
 			</Form>
 			<p className='text-xs text-muted-foreground mt-4'>
-				Email из https://reqres.in/api/users(если нет доступа то charles.morris@reqres.in) Пароль: "cityslicka" (login)
-				или "pistol" (register). Оба допустимы.
+				Email из https://reqres.in/api/users (если нет доступа то
+				charles.morris@reqres.in) Пароль: "cityslicka" или "pistol". Оба
+				допустимы.
 			</p>
 		</div>
 	)
